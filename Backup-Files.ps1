@@ -9,6 +9,7 @@ function Print-Object($object) {
     $object | ConvertTo-Json | Write-Host
 }
 
+
 function Assert-Exists($path, $shouldExist) {
     if( (Test-Path $path ) -ne $shouldExist ) {
         Write-Error -Message "Path $path $(if($shouldExist) {"should"} else {"should not"} ) exist" -ErrorAction Stop
@@ -40,16 +41,23 @@ function Rename-DestinationFile ($job, $existingFile) {
 
 
 function Copy-File($sourcePath, $destinationPath) {
+    #Write-Host "    $($destinationPath)"
     if(!$testOnly.IsPresent) {
         Copy-Item $sourcePath $destinationPath
     }
+    $script:result.Copied.Add($destinationPath)
 }
 
 
+function Get-DestinationPath($job, $sourceFile) {
+    $tail = ($sourceFile.FullName.Replace($job.Source,"")).TrimStart("\")
+    Join-Path $job.Destination $tail
+}
+
 function Backup-File($job, $sourceFile) {
-    Write-Host "    $($sourceFile.Name)"
-    $destinationPath = Join-Path $job.Destination $sourceFile.Name
-    Write-Host "        $($destinationPath)"
+    #Write-Host "    $($sourceFile.Name)"
+    $destinationPath = Get-DestinationPath $job $sourceFile
+    #Write-Host "        $($destinationPath)"
     if (Test-Path $destinationPath) {
         $existingFile = Get-Item $destinationPath
         if (IsSourceNewer $sourceFile $existingFile) {
@@ -67,7 +75,9 @@ function Backup-File($job, $sourceFile) {
 
 function Backup-FileList($job, $sourceFiles) {
     foreach($sourceFile in $sourceFiles) {
-        Backup-File $job $sourceFile
+        if(!($sourceFile -is [System.IO.DirectoryInfo])) {
+            Backup-File $job $sourceFile
+        }
     }
 }
 
@@ -118,10 +128,16 @@ function Build-Config() {
 }
 
 function Backup-Files( ) {
+
+    $script:result = New-Object –TypeName PSObject
+    $script:result | Add-Member -MemberType NoteProperty -Name Copied -Value (New-Object System.Collections.ArrayList($null))
+
     $job = Build-Config
+
     #Print-Object $script:config
     Run-BackupJob $job
 
+    $script:result
 }
 
 Backup-Files
