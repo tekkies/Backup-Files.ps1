@@ -40,11 +40,10 @@ function Rename-DestinationFile ($job, $existingFile) {
 }
 
 
-function Copy-File($sourcePath, $destinationPath) {
-    Write-Host "   $destinationPath"
+function Copy-File($sourceFile, $destinationPath) {
+    Write-Host "   $($sourceFile.FullName)"
     if(!$testOnly.IsPresent) {
-        Copy-Item $sourcePath $destinationPath
-
+        Copy-Item -LiteralPath $sourceFile.FullName $destinationPath
     }
     $script:result.Copied.Add($destinationPath)
 }
@@ -57,16 +56,16 @@ function Get-DestinationPath($job, $sourceFile) {
 
 function Backup-File($job, $sourceFile) {
     $destinationPath = Get-DestinationPath $job $sourceFile
-    if (Test-Path $destinationPath) {
-        $existingFile = Get-Item $destinationPath
+    if (Test-Path -LiteralPath $destinationPath) {
+        $existingFile = Get-Item -LiteralPath $destinationPath
         if (IsSourceNewer $sourceFile $existingFile) {
             Rename-DestinationFile $job $existingFile  
-            Copy-File $sourceFile.FullName $destinationPath          
+            Copy-File $sourceFile $destinationPath          
         }
     } else {
         $destinationFolder = Split-Path -Parent $destinationPath
         New-Item $destinationFolder -type directory -Force
-        Copy-File $sourceFile.FullName $destinationPath
+        Copy-File $sourceFile $destinationPath
     }
 }
 
