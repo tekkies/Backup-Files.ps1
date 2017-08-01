@@ -41,9 +41,10 @@ function Rename-DestinationFile ($job, $existingFile) {
 
 
 function Copy-File($sourcePath, $destinationPath) {
-    #Write-Host "    $($destinationPath)"
+    Write-Host "   $destinationPath"
     if(!$testOnly.IsPresent) {
         Copy-Item $sourcePath $destinationPath
+
     }
     $script:result.Copied.Add($destinationPath)
 }
@@ -55,9 +56,7 @@ function Get-DestinationPath($job, $sourceFile) {
 }
 
 function Backup-File($job, $sourceFile) {
-    #Write-Host "    $($sourceFile.Name)"
     $destinationPath = Get-DestinationPath $job $sourceFile
-    #Write-Host "        $($destinationPath)"
     if (Test-Path $destinationPath) {
         $existingFile = Get-Item $destinationPath
         if (IsSourceNewer $sourceFile $existingFile) {
@@ -82,7 +81,7 @@ function Backup-FileList($job, $sourceFiles) {
 }
 
 function Walk-SourceTree($job, $source) {
-    Write-Host "Folder:$source"
+    Write-Host "$source"
     $unfilteredSourceFiles = @(Get-ChildItem $source)
     if(!$unfilteredSourceFiles) {
         $unfilteredSourceFiles = @() #http://blog.coretech.dk/jgs/powershell-how-to-create-an-empty-array/
@@ -93,9 +92,6 @@ function Walk-SourceTree($job, $source) {
     foreach ($filteredSourceFile in $filteredSourceFiles) {
         if ($filteredSourceFile.PSIsContainer) {
             $childItems = ,(Walk-SourceTree $job $filteredSourceFile.FullName)
-            Write-Host '-------------------------------'
-            Write-Host $unfilteredSourceFiles.ToString()
-            Write-Host $childItems.ToString()
             $filteredSourceFiles = $unfilteredSourceFiles + $childItems
         }
     }
@@ -109,9 +105,10 @@ function Run-BackupJob($job) {
     Write-Host "Source: $($job.source)"
     Assert-Exists $job.source $true
     Write-Host "Destination: $($job.destination)"
+    Write-Host "--------------------------"
     Assert-Exists $job.destination $true
     $filteredSourceFiles = Walk-SourceTree $job $job.source
-   
+    Write-Host "--------------------------"
 }
 
 function Build-Config() {
