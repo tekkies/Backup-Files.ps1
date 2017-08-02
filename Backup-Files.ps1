@@ -1,4 +1,35 @@
-﻿param([string]$source, [string]$destination, [string]$name="(unnamed)", [String[]] $exclude, [switch] $WhatIf)
+﻿<#
+.SYNOPSIS
+    Backup files, preserving old file versions.
+.DESCRIPTION
+    Intended for backing up files to a set of external drives, keeping old versions of files and allowing the backups to be trimmed easily.  Timestamps are used to determine if a new copy of a file should be made.  If a new copy is made, the original is renamed to include a UTC timestamp in the name.
+.NOTES
+    If your destination runs out of space, use a tool like https://windirstat.net/ to prune it.
+    Restore using RoboCopy flag "/xf *.tbhist*" to only restore the latest version of all files.
+.PARAMETER Source
+    The directory you want to backup.
+.PARAMETER Destination
+    The backup directory - this directory must already exist!
+.PARAMETER Name
+    The name of this backup set.
+.PARAMETER Exclude
+    Exclude patterns in REGEX form.
+.PARAMETER WhatIf
+    Don't do the actual backup - just report what would be backed up.
+.PARAMETER Help
+    Show this help.
+.EXAMPLE
+    PS C:\>Backup-Files.ps1 -source "C:\Dev\src" -destination "V:\src" -Name "Source Code" -exclude "\.exe$", "\\bin\\debug\\" -WhatIf
+
+
+#>
+param([string]$Source, [string]$Destination, [string]$Name="(unnamed)", [String[]] $Exclude, [switch] $WhatIf, [switch]$Help)
+
+
+if (($source -eq '') -or ($help.IsPresent)) {
+    Get-Help $PSCommandPath -Detailed
+    exit
+}
 
 Set-StrictMode -Version 4.0 #https://blogs.technet.microsoft.com/pstips/2014/06/17/powershell-scripting-best-practices/
 $ErrorActionPreference = "Stop";
